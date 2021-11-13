@@ -150,13 +150,33 @@ def get_table(my_url):
                 data_dict = {}
 
     return table_dict
+def unite_nested_dict(A, B) -> dict:
+    return {k: dict(A.get(k, {}), **B.get(k, {})) for k in A.keys() | B.keys()} #https://stackoverflow.com/a/29241297
+
 def main():
     my_url = "https://www.we-online.com/katalog/en/pbs/emc_components/ferrites_for_cable_assembly"
     we_online_dict = {}
+    filename = "we_online_dict.json"
+
     for category_link in get_categories(my_url):
-        we_online_dict[category_link] = get_table(category_link)
-        # break
-    with open('we_online_dict.json', 'w') as fp:
+        table = get_table(category_link)
+        we_online_dict[category_link] = {}
+        we_online_dict[category_link]["mpn_table"] = table
+        we_online_dict = dict(sorted(we_online_dict.items()))
+        for key in we_online_dict.keys():
+            we_online_dict[key]["mpn_table"] = dict(sorted(we_online_dict[key]["mpn_table"].items()))
+
+    try:
+        with open(filename, "r") as jsonFile:
+            openjson = json.load(jsonFile)
+            we_online_dict = unite_nested_dict(openjson, we_online_dict)
+            we_online_dict = dict(sorted(we_online_dict.items()))
+            for key in we_online_dict.keys():
+                we_online_dict[key]["mpn_table"] = dict(sorted(we_online_dict[key]["mpn_table"].items()))
+    except IOError:
+        print(f"{filename} not found")
+
+    with open(filename, 'w') as fp:
         json.dump(we_online_dict, fp, indent=4)
     
 
