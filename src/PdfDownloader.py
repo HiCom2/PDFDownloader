@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup as bs
 from urllib.parse import urlparse
 import wget
 from urllib.request import urlopen
-import urllib.request 
+import urllib.request
+import json
 
 def isfloat(value):
   try:
@@ -38,7 +39,34 @@ def get_pdfs(my_url):
                 links.append(og_url["content"] + current_link)
             else:
                 links.append(base.scheme + "://" + base.netloc + current_link)
+    return links
+    for link in links:
+        try: 
+            print(link)
+            # wget.download(link)
+        except:
+            print(" \n \n Unable to Download A File \n")
+    print('\n')
 
+def get_categories(my_url):
+    links = []
+    html = urlopen(my_url).read()
+    html_page = bs(html, features="lxml") 
+    og_url = html_page.find("meta",  property = "og:url")
+    base = urlparse(my_url)
+    print("base",base)
+    for link in html_page.find_all('a'):
+        current_link = link.get('href')
+        myclass = link.get('class')
+        if myclass != None:
+            # print(myclass)
+            if current_link != None and "js-force-parametric-search" in myclass:
+                if og_url:
+                    print("currentLink",current_link)
+                    links.append(og_url["content"] + current_link)
+                else:
+                    links.append(base.scheme + "://" + base.netloc + current_link)
+    return links
     for link in links:
         try: 
             print(link)
@@ -65,7 +93,8 @@ def get_table(my_url):
     check_validity(my_url)
     data_dict, table_dict = {} , {}
     data_order_code_list = get_order_code(my_url)
-    links , table_header_list , table_value_list = [] , [] , []
+    # download_links_list = get_pdfs(my_url)
+    links , table_header_list , table_value_list, pdf_dlink_list = [] , [] , [], []
     html = urlopen(my_url).read()
     html_page = bs(html, features="lxml") 
     og_url = html_page.find("meta",  property = "og:url")
@@ -87,13 +116,19 @@ def get_table(my_url):
     for finding in html_page.find_all('td'):
         # get downloadpath for pdf
         if finding.get("class")[0] == "datasheet":
-            dlink = finding.find_all('a')[0].get('href')
+            for links in finding.find_all('a'):
+                dlink = links.get('href')
+                if dlink.endswith("pdf"):
+                    pdf_dlink_list.append(f"{base.scheme}://{base.netloc}{dlink}")
             continue
 
         data_unit = finding.get('data-unit')
         data_mobile_visible_index = finding.get('data-mobile-visible-index')
         data = finding.string # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#find-all
         if data_unit != None and data_mobile_visible_index!= None :
+            # strip whitespace
+            data = data.strip()
+
             # convert to digit
             data_mobile_visible_index = int(data_mobile_visible_index)
             if isfloat(data.replace(" ","")): data=float(data.replace(" ",""))
@@ -104,8 +139,11 @@ def get_table(my_url):
 
             # if header list is reached then build table dict as MPN : data_dict 
             if len(table_header_list) == data_mobile_visible_index:
-                # creates download link
-                data_dict["pdf_link"] = f"{base.scheme}://{base.netloc}{dlink}"
+                # add pdf link to dict and clear dict after that
+                data_dict["pdf_links"] = pdf_dlink_list
+                pdf_dlink_list = []
+
+                # add data_dict to table_dict
                 table_dict[data_order_code_list[index]] = data_dict
                 
                 index += 1
@@ -113,11 +151,14 @@ def get_table(my_url):
 
     return table_dict
 def main():
-    # print("Enter Link: ")
-    # my_url = input()
-    my_url = "https://www.we-online.com/katalog/de/WE-TOF"
-    table = get_table(my_url)
-    print(table)
+    my_url = "https://www.we-online.com/katalog/de/pbs/emc_components/ferrites_for_cable_assembly"
+    we_online_dict = {}
+    for category_link in get_categories(my_url):
+        we_online_dict[category_link] = get_table(category_link)
+        # break
+    with open('we_online_dict.json', 'w') as fp:
+        json.dump(we_online_dict, fp, indent=4)
+    
 
 main()
 
