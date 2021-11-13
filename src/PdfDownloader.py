@@ -151,7 +151,7 @@ def get_table(my_url):
 
     return table_dict
 def main():
-    my_url = "https://www.we-online.com/katalog/de/pbs/emc_components/ferrites_for_cable_assembly"
+    my_url = "https://www.we-online.com/katalog/en/pbs/emc_components/ferrites_for_cable_assembly"
     we_online_dict = {}
     for category_link in get_categories(my_url):
         we_online_dict[category_link] = get_table(category_link)
