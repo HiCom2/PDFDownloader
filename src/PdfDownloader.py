@@ -160,8 +160,10 @@ def main():
 
     for category_link in get_categories(my_url):
         table = get_table(category_link)
-        we_online_dict[category_link] = {}
-        we_online_dict[category_link]["mpn_table"] = table
+        category = category_link.split("/")[-1]
+        we_online_dict[category] = {}
+        we_online_dict[category]["category_link"] = category_link
+        we_online_dict[category]["mpn_table"] = table
         we_online_dict = dict(sorted(we_online_dict.items()))
         for key in we_online_dict.keys():
             we_online_dict[key]["mpn_table"] = dict(sorted(we_online_dict[key]["mpn_table"].items()))
@@ -170,11 +172,12 @@ def main():
         with open(filename, "r") as jsonFile:
             openjson = json.load(jsonFile)
             we_online_dict = unite_nested_dict(openjson, we_online_dict)
+            print(f"existing {filename} found -> will be united with new dictionary")
             we_online_dict = dict(sorted(we_online_dict.items()))
             for key in we_online_dict.keys():
                 we_online_dict[key]["mpn_table"] = dict(sorted(we_online_dict[key]["mpn_table"].items()))
     except IOError:
-        print(f"{filename} not found")
+        print(f"no existing {filename} found for unite")
 
     with open(filename, 'w') as fp:
         json.dump(we_online_dict, fp, indent=4)
