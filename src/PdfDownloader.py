@@ -163,6 +163,7 @@ def main():
         category = category_link.split("/")[-1]
         we_online_dict[category] = {}
         we_online_dict[category]["_category_link"] = category_link
+        we_online_dict[category]["_trace_frame"] = []
         we_online_dict[category]["_trace_search"] = {}
         we_online_dict[category]["mpn_table"] = table
         we_online_dict = dict(sorted(we_online_dict.items()))
@@ -172,7 +173,7 @@ def main():
     try:
         with open(filename, "r") as jsonFile:
             openjson = json.load(jsonFile)
-            we_online_dict = unite_nested_dict(openjson, we_online_dict)
+            we_online_dict = unite_nested_dict(we_online_dict, openjson)
             print(f"existing {filename} found -> will be united with new dictionary")
             we_online_dict = dict(sorted(we_online_dict.items()))
             for key in we_online_dict.keys():
