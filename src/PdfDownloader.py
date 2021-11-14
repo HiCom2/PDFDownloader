@@ -162,7 +162,8 @@ def main():
         table = get_table(category_link)
         category = category_link.split("/")[-1]
         we_online_dict[category] = {}
-        we_online_dict[category]["category_link"] = category_link
+        we_online_dict[category]["_category_link"] = category_link
+        we_online_dict[category]["_trace_search"] = {}
         we_online_dict[category]["mpn_table"] = table
         we_online_dict = dict(sorted(we_online_dict.items()))
         for key in we_online_dict.keys():
